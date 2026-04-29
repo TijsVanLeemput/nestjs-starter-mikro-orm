@@ -12,20 +12,22 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "rootDir": "./",
     "incremental": true,
     "isolatedModules": true,
     "skipLibCheck": true,
+    "types": ["node", "jest"],
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@libs/common": ["libs/common/src"],
-      "@libs/common/*": ["libs/common/src/*"],
-      "@libs/prisma": ["libs/prisma/src"],
-      "@libs/prisma/*": ["libs/prisma/src/*"]
+      "@libs/common": ["./libs/common/src"],
+      "@libs/common/*": ["./libs/common/src/*"],
+      "@libs/prisma": ["./libs/prisma/src"],
+      "@libs/prisma/*": ["./libs/prisma/src/*"]
     }
   }
 }
