@@ -1,5 +1,6 @@
-import { PrismaService } from '@libs/prisma';
+import { TodoRepository } from '@libs/mikro-orm/repositories';
 import { Injectable } from '@nestjs/common';
+import { v4 } from 'uuid';
 
 import {
   CreateTodoRequestBody,
@@ -16,38 +17,50 @@ import { TodoNotFoundException } from './todos.exceptions';
 
 @Injectable()
 export class TodosService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly todoRepository: TodoRepository) {}
 
   create(data: CreateTodoRequestBody): Promise<CreateTodoResponse> {
-    return this.prismaService.todo.create({ data });
+    const id = v4();
+    return this.todoRepository.create({
+      id,
+      ...data,
+      completed: false,
+    });
   }
 
   findAll(): Promise<FindAllTodosResponse[]> {
-    return this.prismaService.todo.findMany();
+    return this.todoRepository.findAll();
   }
 
   async findOne(id: string): Promise<FindOneTodoResponse> {
-    const todo = await this.prismaService.todo.findUnique({
-      where: {
-        id,
-      },
-    });
+    const todo = await this.todoRepository.findById(id);
 
     if (!todo) throw new TodoNotFoundException();
 
     return todo;
   }
 
-  update(id: string, data: UpdateTodoRequestBody): Promise<UpdateTodoResponse> {
-    return this.prismaService.todo.update({
-      where: {
-        id,
-      },
-      data,
-    });
+  async update(
+    id: string,
+    data: UpdateTodoRequestBody,
+  ): Promise<UpdateTodoResponse> {
+    const todo = await this.todoRepository.findById(id);
+    if (!todo) throw new TodoNotFoundException();
+
+    await this.todoRepository.update(id, data);
+
+    // Fetch the updated entity to return it
+    const updated = await this.todoRepository.findById(id);
+    if (!updated) throw new TodoNotFoundException();
+
+    return updated;
   }
 
-  remove(id: string): Promise<RemoveTodoResponse> {
-    return this.prismaService.todo.delete({ where: { id } });
+  async remove(id: string): Promise<RemoveTodoResponse> {
+    const todo = await this.todoRepository.findById(id);
+    if (!todo) throw new TodoNotFoundException();
+
+    await this.todoRepository.delete(id);
+    return todo;
   }
 }
