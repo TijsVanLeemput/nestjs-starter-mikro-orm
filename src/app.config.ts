@@ -1,40 +1,34 @@
 import { Environment, LogLevel, validateConfig } from '@libs/common';
 import { registerAs } from '@nestjs/config';
-import { Expose, Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsPort,
-  IsString,
-} from 'class-validator';
+import { z } from 'zod';
 
-export class AppConfig {
-  @Expose({ name: 'NODE_ENV' })
-  @IsEnum(Environment)
-  environment: Environment;
+const environmentValues = Object.values(Environment) as [string, ...string[]];
+const logLevelValues = Object.values(LogLevel) as [string, ...string[]];
 
-  @Expose({ name: 'PORT' })
-  @IsPort()
-  port: string;
+const appConfigSchema = z.object({
+  NODE_ENV: z.enum(environmentValues),
+  PORT: z.string().transform(Number).pipe(z.number().int().min(1).max(65535)),
+  LOG_LEVEL: z.enum(logLevelValues),
+  ALLOWED_ORIGINS: z
+    .string()
+    .optional()
+    .transform((value) => (value ? value.split(',') : [])),
+  REQUESTS_PER_MINUTE: z
+    .string()
+    .optional()
+    .transform((value) => (value ? Number(value) : 100))
+    .pipe(z.number()),
+  VALKEY_URL: z.string(),
+}).transform((data) => ({
+  environment: data.NODE_ENV,
+  port: data.PORT,
+  logLevel: data.LOG_LEVEL,
+  allowedOrigins: data.ALLOWED_ORIGINS,
+  requestsPerMinute: data.REQUESTS_PER_MINUTE,
+  valkeyUrl: data.VALKEY_URL,
+}));
+export type AppConfig = z.infer<typeof appConfigSchema>;
 
-  @Expose({ name: 'LOG_LEVEL' })
-  @IsEnum(LogLevel)
-  logLevel: LogLevel;
-
-  @Expose({ name: 'ALLOWED_ORIGINS' })
-  @IsString({ each: true })
-  @IsOptional()
-  @Transform(({ value }: { value: string }) => value.split(','))
-  allowedOrigins?: string[];
-
-  @Expose({ name: 'REQUESTS_PER_MINUTE' })
-  @IsNumber()
-  requestsPerMinute: number = 100;
-
-  @Expose({ name: 'VALKEY_URL' })
-  @IsString()
-  valkeyUrl: string;
-}
-
-export const appConfig = registerAs('app', () => validateConfig(AppConfig));
+export const appConfig = registerAs('app', () => {
+  return validateConfig(appConfigSchema);
+});
