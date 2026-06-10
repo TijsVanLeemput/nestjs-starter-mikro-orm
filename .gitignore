@@ -50,6 +50,9 @@ lerna-debug.log*
 # MikroORM cache
 mikro-orm/.cache
 
+# MikroORM snapshots
+mikro-orm/migrations/.snapshot-*.json
+
 # Runtime data
 pids
 *.pid
