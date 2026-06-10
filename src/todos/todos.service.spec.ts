@@ -58,10 +58,10 @@ describe('TodosService', () => {
 
       jest.spyOn(todoRepository, 'findAll').mockResolvedValue(todos);
 
-      const result = await todosService.findAll();
+      const result = await todosService.getAll();
 
       expect(result).toEqual(todos);
-      expect(todoRepository.findAll).toHaveBeenCalled();
+      expect(todoRepository.getAll).toHaveBeenCalled();
     });
   });
 
@@ -72,10 +72,10 @@ describe('TodosService', () => {
 
       jest.spyOn(todoRepository, 'findById').mockResolvedValue(todo);
 
-      const result = await todosService.findOne(id);
+      const result = await todosService.getById(id);
 
       expect(result).toEqual(todo);
-      expect(todoRepository.findById).toHaveBeenCalledWith(id);
+      expect(todoRepository.getById).toHaveBeenCalledWith(id);
     });
 
     it('should throw an error if no todo exists', async () => {
@@ -83,10 +83,10 @@ describe('TodosService', () => {
 
       jest.spyOn(todoRepository, 'findById').mockResolvedValue(null);
 
-      await expect(todosService.findOne(id)).rejects.toThrow(
+      await expect(todosService.getById(id)).rejects.toThrow(
         TodoNotFoundException,
       );
-      expect(todoRepository.findById).toHaveBeenCalledWith(id);
+      expect(todoRepository.getById).toHaveBeenCalledWith(id);
     });
   });
 
@@ -104,7 +104,7 @@ describe('TodosService', () => {
       const result = await todosService.update(id, updateData);
 
       expect(result).toEqual(todo);
-      expect(todoRepository.findById).toHaveBeenCalledWith(id);
+      expect(todoRepository.getById).toHaveBeenCalledWith(id);
       expect(todoRepository.update).toHaveBeenCalledWith(id, updateData);
     });
   });
@@ -117,10 +117,10 @@ describe('TodosService', () => {
       jest.spyOn(todoRepository, 'findById').mockResolvedValue(todo);
       jest.spyOn(todoRepository, 'delete').mockResolvedValue(undefined);
 
-      const result = await todosService.remove(id);
+      const result = await todosService.delete(id);
 
       expect(result).toEqual(todo);
-      expect(todoRepository.findById).toHaveBeenCalledWith(id);
+      expect(todoRepository.getById).toHaveBeenCalledWith(id);
       expect(todoRepository.delete).toHaveBeenCalledWith(id);
     });
   });

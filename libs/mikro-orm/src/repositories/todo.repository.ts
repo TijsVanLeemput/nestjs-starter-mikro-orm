@@ -1,4 +1,4 @@
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager, wrap } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { Todo } from '../../../../mikro-orm/entities';
@@ -9,11 +9,11 @@ type CreateTodoData = Omit<Todo, 'deleted' | 'createdAt' | 'updatedAt'>;
 export class TodoRepository {
   constructor(private readonly em: EntityManager) {}
 
-  async findAll(): Promise<Todo[]> {
+  async getAll(): Promise<Todo[]> {
     return this.em.find(Todo, {});
   }
 
-  async findById(id: string): Promise<Todo | null> {
+  async getById(id: string): Promise<Todo | null> {
     return this.em.findOne(Todo, { id });
   }
 
@@ -24,8 +24,11 @@ export class TodoRepository {
     return todo;
   }
 
-  async update(id: string, data: Partial<Todo>): Promise<void> {
-    await this.em.nativeUpdate(Todo, { id }, data);
+  async update(id: string, data: Partial<Todo>): Promise<Todo> {
+    const todo = await this.getById(id);
+    wrap(todo!).assign(data);
+    await this.em.flush();
+    return todo!;
   }
 
   async delete(id: string): Promise<void> {

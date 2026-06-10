@@ -1,5 +1,5 @@
 import { Environment } from '@libs/common';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -7,6 +7,7 @@ import {
   utilities as nestWinstonModuleUtilities,
   WinstonModule,
 } from 'nest-winston';
+import { ZodValidationPipe } from 'nestjs-zod';
 import * as winston from 'winston';
 
 import { AppConfig, appConfig } from './app.config';
@@ -46,12 +47,7 @@ async function bootstrap() {
   });
 
   // Request validation
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(new ZodValidationPipe());
 
   // Security
   app.use(helmet({ contentSecurityPolicy: false }));
