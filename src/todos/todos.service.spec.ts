@@ -1,9 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { PrismaService } from '@libs/prisma';
+import { EntityManager } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Todo } from '@prisma/client';
 import { mock, mockDeep } from 'jest-mock-extended';
 
+import { TodoRepository } from '@libs/mikro-orm/repositories';
+import { Todo } from '../../mikro-orm/entities';
 import { CreateTodoRequestBody } from './dto/create-todo.dto';
 import { UpdateTodoRequestBody } from './dto/update-todo.dto';
 import { TodoNotFoundException } from './todos.exceptions';
@@ -11,31 +12,43 @@ import { TodosService } from './todos.service';
 
 describe('TodosService', () => {
   let todosService: TodosService;
-  const prismaService = mockDeep<PrismaService>();
+  let todoRepository: TodoRepository;
 
   beforeEach(async () => {
+    // Mock the EntityManager
+    const mockEntityManager = mockDeep<EntityManager>();
+
+    // Create a mock TodoRepository
+    const mockTodoRepository = mockDeep<TodoRepository>();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TodosService,
         {
-          provide: PrismaService,
-          useValue: prismaService,
+          provide: TodoRepository,
+          useValue: mockTodoRepository,
+        },
+        {
+          provide: EntityManager,
+          useValue: mockEntityManager,
         },
       ],
     }).compile();
 
     todosService = module.get<TodosService>(TodosService);
+    todoRepository = module.get<TodoRepository>(TodoRepository);
   });
 
   describe('create', () => {
     it('should return a todo', async () => {
       const todo = mock<Todo>();
 
-      prismaService.todo.create.mockResolvedValue(todo);
+      jest.spyOn(todoRepository, 'create').mockResolvedValue(todo);
 
       const result = await todosService.create(mock<CreateTodoRequestBody>());
 
       expect(result).toEqual(todo);
+      expect(todoRepository.create).toHaveBeenCalled();
     });
   });
 
@@ -43,58 +56,72 @@ describe('TodosService', () => {
     it('should return todos', async () => {
       const todos = mock<Todo[]>();
 
-      prismaService.todo.findMany.mockResolvedValue(todos);
+      jest.spyOn(todoRepository, 'findAll').mockResolvedValue(todos);
 
       const result = await todosService.findAll();
 
       expect(result).toEqual(todos);
+      expect(todoRepository.findAll).toHaveBeenCalled();
     });
   });
 
   describe('findOne', () => {
     it('should return a todo', async () => {
       const todo = mock<Todo>();
+      const id = faker.string.uuid();
 
-      prismaService.todo.findUnique.mockResolvedValue(todo);
+      jest.spyOn(todoRepository, 'findById').mockResolvedValue(todo);
 
-      const result = await todosService.findOne(faker.string.uuid());
+      const result = await todosService.findOne(id);
 
       expect(result).toEqual(todo);
+      expect(todoRepository.findById).toHaveBeenCalledWith(id);
     });
 
     it('should throw an error if no todo exists', async () => {
-      prismaService.todo.findUnique.mockResolvedValue(null);
+      const id = faker.string.uuid();
 
-      await expect(todosService.findOne(faker.string.uuid())).rejects.toThrow(
+      jest.spyOn(todoRepository, 'findById').mockResolvedValue(null);
+
+      await expect(todosService.findOne(id)).rejects.toThrow(
         TodoNotFoundException,
       );
+      expect(todoRepository.findById).toHaveBeenCalledWith(id);
     });
   });
 
   describe('update', () => {
-    it('should return a todo', async () => {
+    it('should return the updated todo', async () => {
       const todo = mock<Todo>();
+      const id = faker.string.uuid();
+      const updateData = mock<UpdateTodoRequestBody>();
 
-      prismaService.todo.update.mockResolvedValue(todo);
+      // Mock the repository methods
+      jest.spyOn(todoRepository, 'findById').mockResolvedValue(todo);
+      jest.spyOn(todoRepository, 'update').mockResolvedValue(undefined);
+      jest.spyOn(todoRepository, 'findById').mockResolvedValue(todo);
 
-      const result = await todosService.update(
-        faker.string.uuid(),
-        mock<UpdateTodoRequestBody>(),
-      );
+      const result = await todosService.update(id, updateData);
 
       expect(result).toEqual(todo);
+      expect(todoRepository.findById).toHaveBeenCalledWith(id);
+      expect(todoRepository.update).toHaveBeenCalledWith(id, updateData);
     });
   });
 
   describe('remove', () => {
-    it('should return a todo', async () => {
+    it('should return the removed todo', async () => {
       const todo = mock<Todo>();
+      const id = faker.string.uuid();
 
-      prismaService.todo.delete.mockResolvedValue(todo);
+      jest.spyOn(todoRepository, 'findById').mockResolvedValue(todo);
+      jest.spyOn(todoRepository, 'delete').mockResolvedValue(undefined);
 
-      const result = await todosService.remove(faker.string.uuid());
+      const result = await todosService.remove(id);
 
       expect(result).toEqual(todo);
+      expect(todoRepository.findById).toHaveBeenCalledWith(id);
+      expect(todoRepository.delete).toHaveBeenCalledWith(id);
     });
   });
 });

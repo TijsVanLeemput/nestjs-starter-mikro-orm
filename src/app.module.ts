@@ -1,4 +1,4 @@
-import { PrismaModule } from '@libs/prisma';
+import { MikroOrmModule } from '@libs/mikro-orm';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -26,7 +26,7 @@ import { TodosModule } from './todos/todos.module';
       }),
       inject: [appConfig.KEY],
     }),
-    PrismaModule,
+    MikroOrmModule,
     TodosModule,
   ],
   providers: [

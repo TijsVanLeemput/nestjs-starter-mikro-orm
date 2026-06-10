@@ -46,6 +46,12 @@ lerna-debug.log*
 .temp
 .tmp
 
+# MikroORM cache
+mikro-orm/.cache
+
+# MikroORM snapshots
+mikro-orm/migrations/.snapshot-*.json
+
 # Runtime data
 pids
 *.pid

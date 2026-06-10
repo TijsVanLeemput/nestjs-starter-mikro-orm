@@ -11,7 +11,7 @@ nestjs-starter is a production-ready NestJS boilerplate that contains everything
 - Swagger
 - Request validation
 - API versioning
-- Database integration ([Prisma](https://www.prisma.io))
+- Database integration ([MikroORM](https://mikro-orm.io))
 
 ### Security
 
